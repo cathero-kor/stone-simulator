@@ -2349,9 +2349,13 @@
   const closeContactButton = document.getElementById("closeContact");
   const contactMessageInput = document.getElementById("contactMessage");
   const submitContactButton = document.getElementById("submitContact");
-  const contactStatus = document.getElementById("contactStatus");
-  let contactCallbackSeq = 0;
-  let currentInfoSlot = 1;
+const contactStatus = document.getElementById("contactStatus");
+
+const CONTACT_COOLDOWN_MS = 60 * 1000;
+const CONTACT_LAST_SENT_KEY = "nyanghonseok_contact_last_sent_at";
+
+let contactCallbackSeq = 0;
+let currentInfoSlot = 1;
 
   function escapeHTML(value) {
     return String(value).replace(/[&<>"']/g, ch => ({
@@ -2502,30 +2506,43 @@
       });
     }
 
-    if (submitContactButton) {
-      submitContactButton.addEventListener("click", async () => {
-        const message = contactMessageInput ? contactMessageInput.value.trim() : "";
-        if (!message) {
-          setContactStatus("문의 내용을 입력해 주세요.", true);
-          return;
-        }
-
-        submitContactButton.disabled = true;
-        setContactStatus("전달 중입니다...");
-
-        try {
-          await requestContactSubmit(message);
-          setContactStatus("전달되었습니다. 감사합니다.");
-          if (contactMessageInput) contactMessageInput.value = "";
-          setTimeout(closeContactModal, 850);
-        } catch (err) {
-          setContactStatus(err && err.message ? err.message : "문의 전달에 실패했습니다.", true);
-        } finally {
-          submitContactButton.disabled = false;
-        }
-      });
+if (submitContactButton) {
+  submitContactButton.addEventListener("click", async () => {
+    const message = contactMessageInput ? contactMessageInput.value.trim() : "";
+    if (!message) {
+      setContactStatus("문의 내용을 입력해 주세요.", true);
+      return;
     }
-  }
+
+    const now = Date.now();
+    const lastSentAt = Number(localStorage.getItem(CONTACT_LAST_SENT_KEY) || 0);
+    const remainMs = CONTACT_COOLDOWN_MS - (now - lastSentAt);
+
+    if (remainMs > 0) {
+      const remainSec = Math.ceil(remainMs / 1000);
+      setContactStatus(`문의는 ${remainSec}초 후 다시 보낼 수 있습니다.`, true);
+      return;
+    }
+
+    submitContactButton.disabled = true;
+    setContactStatus("전달 중입니다...");
+
+    try {
+      await requestContactSubmit(message);
+
+      localStorage.setItem(CONTACT_LAST_SENT_KEY, String(Date.now()));
+
+      setContactStatus("전달되었습니다. 감사합니다.");
+      if (contactMessageInput) contactMessageInput.value = "";
+      setTimeout(closeContactModal, 850);
+    } catch (err) {
+      setContactStatus(err && err.message ? err.message : "문의 전달에 실패했습니다.", true);
+    } finally {
+      submitContactButton.disabled = false;
+    }
+  });
+}
+}
 
   function getSelectedSkillLevel(slotIndex) {
     return levels[slotIndex - 1] || 0;
