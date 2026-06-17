@@ -459,22 +459,112 @@
     line-height: 1;
     appearance: none;
     -webkit-appearance: none;
-    border: 2px solid #1b1009;
-    border-radius: 5px;
-    background: linear-gradient(#fff381, #ffd64b);
+    border: 2px solid #fff3a6;
+    border-radius: 7px;
+    background:
+      linear-gradient(180deg, #fff8a8 0%, #ffc938 42%, #ff7b10 100%);
     color: #fff;
     font-size: clamp(9px, 2.55vw, 12px);
-    font-weight: 900;
-    letter-spacing: -0.04em;
+    font-weight: 1000;
+    letter-spacing: -0.05em;
     text-shadow:
-      -1px -1px 0 #000,
-       1px -1px 0 #000,
-      -1px  1px 0 #000,
-       1px  1px 0 #000;
+      -1px -1px 0 #5a1700,
+       1px -1px 0 #5a1700,
+      -1px  1px 0 #5a1700,
+       1px  1px 0 #5a1700,
+       0 2px 2px rgba(0,0,0,.45);
     box-shadow:
-      inset 0 0 0 1px rgba(255,255,255,.35),
-      0 1px 0 #5d3f22;
+      0 0 0 2px rgba(80, 24, 0, .75),
+      inset 0 1px 0 rgba(255,255,255,.72),
+      0 0 10px rgba(255, 215, 74, .9),
+      0 2px 3px rgba(0,0,0,.45);
     cursor: pointer;
+    overflow: hidden;
+    animation: skillSelectGlow 1.25s ease-in-out infinite;
+  }
+
+  .skill-select-open::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 245, 150, .85);
+    animation: skillSelectPulse 1.25s ease-out infinite;
+    pointer-events: none;
+  }
+
+  .skill-select-open::after {
+    content: "";
+    position: absolute;
+    top: -75%;
+    left: -55%;
+    width: 45%;
+    height: 250%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,.85),
+      transparent
+    );
+    transform: rotate(24deg);
+    animation: skillSelectShine 1.9s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .skill-select-open.selected {
+    border-color: #6b4a25;
+    background:
+      linear-gradient(180deg, #7d5b35 0%, #4a321d 100%);
+    color: #f8dfaa;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,.7),
+      inset 0 1px 0 rgba(255,255,255,.22),
+      0 1px 2px rgba(0,0,0,.45);
+    animation: none;
+  }
+
+  .skill-select-open.selected::before,
+  .skill-select-open.selected::after {
+    display: none;
+  }
+
+  @keyframes skillSelectGlow {
+    0%, 100% {
+      filter: brightness(1);
+      transform: scale(1);
+    }
+    50% {
+      filter: brightness(1.22);
+      transform: scale(1.06);
+    }
+  }
+
+  @keyframes skillSelectPulse {
+    0% {
+      transform: scale(.88);
+      opacity: .95;
+    }
+    100% {
+      transform: scale(1.35);
+      opacity: 0;
+    }
+  }
+
+  @keyframes skillSelectShine {
+    0% {
+      left: -60%;
+      opacity: 0;
+    }
+    28% {
+      opacity: 1;
+    }
+    65% {
+      opacity: 1;
+    }
+    100% {
+      left: 125%;
+      opacity: 0;
+    }
   }
 
   .desc {
