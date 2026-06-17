@@ -6,6 +6,7 @@
 
 
 
+
 <!DOCTYPE html>
 
 <html lang="ko">
@@ -1565,6 +1566,8 @@
     overflow-x: hidden;
     padding: 0 4px 2px 0;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
   }
 
   .board-empty {
@@ -2104,6 +2107,17 @@
 
   document.addEventListener("touchmove", (event) => {
     if (event.touches.length !== 1) return;
+
+    const target = event.target;
+
+    if (
+      target &&
+      target.closest &&
+      target.closest(".update-modal, .skill-modal, .board-list, .board-image-viewer-modal")
+    ) {
+      nyangLastTouchY = event.touches[0].clientY;
+      return;
+    }
 
     const currentY = event.touches[0].clientY;
     const isPullingDownAtTop = currentY > nyangLastTouchY && window.scrollY <= 0;
