@@ -5,6 +5,7 @@
 
 
 
+
 <!DOCTYPE html>
 
 <html lang="ko">
@@ -1700,27 +1701,44 @@
 
   .board-card-best-label {
     position: absolute;
-    top: 6px;
-    left: 7px;
-    z-index: 3;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: #e00000;
-    font-size: 18px;
+    top: 5px;
+    left: 5px;
+    z-index: 5;
+    padding: 4px 8px 5px;
+    border: 2px solid #fff4a8;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle at 30% 20%, #fff8bf 0%, #ffd84a 32%, #ff7a00 72%, #cf1600 100%);
+    color: #fff;
+    font-size: 16px;
     font-weight: 1000;
     line-height: 1;
-    letter-spacing: .7px;
-    transform: rotate(-13deg);
+    letter-spacing: .8px;
+    transform: rotate(-10deg);
     transform-origin: left center;
+    box-shadow:
+      0 0 0 2px rgba(150, 28, 0, .75),
+      0 0 10px rgba(255, 216, 60, .95),
+      0 3px 6px rgba(70, 20, 0, .45);
     text-shadow:
-      -1px -1px 0 #fff4d0,
-       1px -1px 0 #fff4d0,
-      -1px  1px 0 #fff4d0,
-       1px  1px 0 #fff4d0,
-       0 2px 3px rgba(80, 0, 0, .35);
-    -webkit-text-stroke: .35px #fff4d0;
+      -1px -1px 0 #8c0000,
+       1px -1px 0 #8c0000,
+      -1px  1px 0 #8c0000,
+       1px  1px 0 #8c0000,
+       0 2px 2px rgba(0, 0, 0, .45);
     pointer-events: none;
+    animation: bestLabelPulse 1.35s ease-in-out infinite;
+  }
+
+  @keyframes bestLabelPulse {
+    0%, 100% {
+      filter: brightness(1);
+      transform: rotate(-10deg) scale(1);
+    }
+    50% {
+      filter: brightness(1.22);
+      transform: rotate(-10deg) scale(1.08);
+    }
   }
 
 </style>
@@ -3013,30 +3031,59 @@ if (submitContactButton) {
     });
   }
 
-  function makeCompressedDataUrl(sourceCanvas, maxChars = 45000) {
-    const maxWidth = 360;
+  function makeCompressedDataUrl(sourceCanvas, maxChars = 49000) {
+    const maxWidth = 520;
     const ratio = Math.min(1, maxWidth / sourceCanvas.width);
     const out = document.createElement("canvas");
     out.width = Math.max(1, Math.round(sourceCanvas.width * ratio));
     out.height = Math.max(1, Math.round(sourceCanvas.height * ratio));
+
     const ctx = out.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.drawImage(sourceCanvas, 0, 0, out.width, out.height);
 
-    let quality = 0.72;
-    let dataUrl = out.toDataURL("image/jpeg", quality);
-    while (dataUrl.length > maxChars && quality > 0.32) {
-      quality -= 0.08;
-      dataUrl = out.toDataURL("image/jpeg", quality);
+    function makeDataUrl(canvas, type, quality) {
+      const dataUrl = canvas.toDataURL(type, quality);
+      if (type === "image/webp" && !dataUrl.startsWith("data:image/webp")) {
+        return canvas.toDataURL("image/jpeg", quality);
+      }
+      return dataUrl;
+    }
+
+    let type = "image/webp";
+    let quality = 0.9;
+    let dataUrl = makeDataUrl(out, type, quality);
+
+    while (dataUrl.length > maxChars && quality > 0.56) {
+      quality -= 0.06;
+      dataUrl = makeDataUrl(out, type, quality);
+    }
+
+    if (dataUrl.length <= maxChars) return dataUrl;
+
+    type = "image/jpeg";
+    quality = 0.82;
+    dataUrl = makeDataUrl(out, type, quality);
+
+    while (dataUrl.length > maxChars && quality > 0.46) {
+      quality -= 0.06;
+      dataUrl = makeDataUrl(out, type, quality);
     }
 
     if (dataUrl.length <= maxChars) return dataUrl;
 
     const smaller = document.createElement("canvas");
-    const shrink = Math.sqrt(maxChars / dataUrl.length) * 0.92;
+    const shrink = Math.sqrt(maxChars / dataUrl.length) * 0.94;
     smaller.width = Math.max(1, Math.round(out.width * shrink));
     smaller.height = Math.max(1, Math.round(out.height * shrink));
-    smaller.getContext("2d").drawImage(out, 0, 0, smaller.width, smaller.height);
-    return smaller.toDataURL("image/jpeg", 0.34);
+
+    const smallerCtx = smaller.getContext("2d");
+    smallerCtx.imageSmoothingEnabled = true;
+    smallerCtx.imageSmoothingQuality = "high";
+    smallerCtx.drawImage(out, 0, 0, smaller.width, smaller.height);
+
+    return makeDataUrl(smaller, "image/jpeg", 0.58);
   }
 
   async function captureNyangStoneForBoard() {
@@ -3068,7 +3115,7 @@ if (submitContactButton) {
       await new Promise(resolve => requestAnimationFrame(resolve));
       const canvas = await html2canvas(clone, {
         backgroundColor: null,
-        scale: 1,
+        scale: Math.min(2, window.devicePixelRatio || 1.5),
         useCORS: true,
         logging: false
       });
