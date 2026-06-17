@@ -2982,10 +2982,19 @@ if (submitContactButton) {
 
   function updateShareButtons() {
     const completed = isCraftCompleted();
+    const canShare = completed && !shareUploadedForCurrentCraft;
+
     document.querySelectorAll("[data-open-share]").forEach(btn => {
-      btn.disabled = !completed;
-      btn.setAttribute("aria-disabled", completed ? "false" : "true");
-      btn.title = completed ? "자랑하기" : "모든 세공을 완료하면 활성화됩니다.";
+      btn.disabled = !canShare;
+      btn.setAttribute("aria-disabled", canShare ? "false" : "true");
+
+      if (!completed) {
+        btn.title = "모든 세공을 완료하면 활성화됩니다.";
+      } else if (shareUploadedForCurrentCraft) {
+        btn.title = "이미 게시판에 업로드한 냥혼석입니다.";
+      } else {
+        btn.title = "자랑하기";
+      }
     });
   }
 
@@ -3329,7 +3338,8 @@ if (submitContactButton) {
     }).join("");
   }
 
-  let boardLikeRefreshTimer = null;
+    let boardLikeRefreshTimer = null;
+  let shareUploadedForCurrentCraft = false;
 
   async function loadBoardItems(options = {}) {
     if (!boardList) return;
@@ -3359,6 +3369,13 @@ if (submitContactButton) {
           setShareStatus("모든 세공이 끝난 뒤 자랑하기를 사용할 수 있습니다.", true);
           return;
         }
+
+        if (shareUploadedForCurrentCraft) {
+          setShareStatus("이미 게시판에 업로드한 냥혼석입니다.", true);
+          updateShareButtons();
+          return;
+        }
+
         if (shareDescriptionInput) shareDescriptionInput.value = "";
         setShareStatus("");
         if (shareBackdrop) shareBackdrop.classList.add("open");
@@ -3467,6 +3484,12 @@ if (submitContactButton) {
           return;
         }
 
+        if (shareUploadedForCurrentCraft) {
+          setShareStatus("이미 게시판에 업로드한 냥혼석입니다.", true);
+          updateShareButtons();
+          return;
+        }
+
         const description = shareDescriptionInput ? enforceShareDescriptionLimit().trim() : "";
         if (getShareDescriptionLength(description) > SHARE_DESCRIPTION_LIMIT) {
           setShareStatus("한줄 설명은 총 20자까지 입력할 수 있습니다. (띄어쓰기/영어/숫자 0.5자)", true);
@@ -3479,6 +3502,8 @@ if (submitContactButton) {
           const imageData = await captureNyangStoneForBoard();
           setShareStatus("업로드 중입니다...");
           await requestShareUpload(description, imageData);
+          shareUploadedForCurrentCraft = true;
+          updateShareButtons();
           setShareStatus("업로드되었습니다. 게시판에서 확인할 수 있습니다.");
           if (shareDescriptionInput) shareDescriptionInput.value = "";
           setTimeout(() => {
@@ -3488,7 +3513,7 @@ if (submitContactButton) {
         } catch (err) {
           setShareStatus(err && err.message ? err.message : "업로드에 실패했습니다.", true);
         } finally {
-          submitShareButton.disabled = false;
+          submitShareButton.disabled = shareUploadedForCurrentCraft;
         }
       });
     }
@@ -3797,6 +3822,7 @@ if (submitContactButton) {
     clearCraftReveal();
     success = 0;
     successRate = 75;
+    shareUploadedForCurrentCraft = false;
     craftRows.forEach(row => {
       row.outcomes = [];
     });
@@ -3807,6 +3833,7 @@ if (submitContactButton) {
     clearCraftReveal();
     success = 0;
     successRate = 75;
+    shareUploadedForCurrentCraft = false;
     levels = [0, 0, 0];
     selectedSkills = [];
     currentInfoSlot = 1;
